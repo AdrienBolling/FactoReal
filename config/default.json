@@ -1,0 +1,17 @@
+{
+    "machines":
+    {
+        "1":
+        {
+            "production_rate": 0.5,
+            "setup_time": 0.1,
+            "components":
+            {
+                "Motor":
+                {
+                    "repair_time": 3,
+                }
+            }
+        }
+    }
+}
