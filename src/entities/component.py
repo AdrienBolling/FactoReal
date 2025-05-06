@@ -57,7 +57,7 @@ class MachineComponent:
     repair_time = None
     repair_cost = None
     
-    def __init__(self, fast_degradation: bool = False):
+    def __init__(self, fast_degradation: bool):
         """
         Initialize the component.
         This function should be called to initialize the component.
@@ -71,6 +71,7 @@ class MachineComponent:
         # Initialize the weibull_cdf_generator
         self.weibull_cdf = weibull_cdf_generator(self.wb_beta, self.wb_eta, start=0, step=1)  # TODO: to be implemented - taking into account the gamma parameter
         self.etf = weibull_mean(self.wb_beta, self.wb_eta, self.wb_gamma)  # TODO: to be implemented - taking into account the gamma parameter
+        self.prev_cdf = 0.0  # The current failure probability is 0 by default
         
     def step(
         self,
@@ -81,9 +82,12 @@ class MachineComponent:
         if self.broken:
             return
         self.etf -= 1
-        failure_prob = next(self.weibull_cdf)
-        if failure_prob > np.random.rand():
+        new_failure_prob = next(self.weibull_cdf)
+
+        # Sample a boolean according to the Weibull distribution
+        if np.random.uniform(0, 1) < new_failure_prob - self.prev_cdf:
             self.broken = True
+        self.prev_cdf = new_failure_prob
             
     def get_component_features(
         self,
@@ -107,7 +111,27 @@ class MachineComponent:
         self.broken = False
         self.weibull_cdf = weibull_cdf_generator(self.wb_beta, self.wb_eta, start=0, step=1)
         self.etf = weibull_mean(self.wb_beta, self.wb_eta, self.wb_gamma)
-            
+    
+    def reset(
+        self,
+    ):
+        """
+        Reset the component to its initial state.
+        This function should be called to reset the component's state.
+        """
+        self.broken = False
+        self.weibull_cdf = weibull_cdf_generator(self.wb_beta, self.wb_eta, start=0, step=1)
+        self.etf = weibull_mean(self.wb_beta, self.wb_eta, self.wb_gamma)
+        
+        
+    # Modify the __str__ method to return the component's state
+    def __str__(self):
+        """
+        Return the component's state.
+        This function should be called to get the component's state.
+        It will return a string with the component's state.
+        """
+        return f"{self.name} - broken: {self.broken} - etf: {self.etf}"
         
     
 class ComponentFactory:
