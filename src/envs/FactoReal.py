@@ -6,6 +6,7 @@ from src.entities.technician import Technician
 import numpy as np
 from src.entities.actions import DISPATCHING_RULES
 from src.entities.actions import TECH_RULES, MACHINE_RULES, COMPONENT_RULES
+import wandb
 
 class FactoReal(gym.Env):
     
@@ -57,6 +58,11 @@ class FactoReal(gym.Env):
         self.disobedience_profile = ARGS.disobedience_profile
         self.rewards = ARGS.reward_function
         
+        # Env step
+        self.env_step = 0
+        
+        self.episode_length = ARGS.episode_length
+        
         
     def reset(self, seed=None, options=None):
         """
@@ -77,6 +83,9 @@ class FactoReal(gym.Env):
         # Reset the technicians
         for technician in self.technicians:
             technician.reset()
+            
+        # Reset the env step
+        self.env_step = 0
         
         # Return the initial observation
         return self.get_observation(), {}
@@ -85,6 +94,7 @@ class FactoReal(gym.Env):
         """
         Take a step in the environment.
         """
+        self.env_step += 1
         # Get the action
         action_idx = action
         action = DISPATCHING_RULES[action]
@@ -126,9 +136,12 @@ class FactoReal(gym.Env):
         # Check if the episode is done
         done = self._is_done()
         # Return the observation, reward, done, and info
-        truncated = False
-        info = {"status": "ok"}
-        return observation, reward, done, truncated, info
+        truncated = self.env_step >= self.episode_length
+        
+        # Log the data to wandb
+        self._log_to_wandb()
+        
+        return observation, reward, done, truncated, {}
     
     def get_observation(self):
         """
@@ -334,11 +347,20 @@ class FactoReal(gym.Env):
         Render the environment as a JSON object.
         """
         rendering = {}
+        rendering["env_step"] = self.env_step
         rendering["initial_products"] = len(self.initial_products)
         rendering["final_products"] = len(self.final_products)
         rendering["machines"] = {m.id: m._render_dict() for m in self.machines}
         rendering["technicians"] = {t.id: t._render_dict() for t in self.technicians}
         return rendering
+    
+    def _log_to_wandb(self):
+        data = self._render_dict()
+        rewards = self._get_reward()
+        data["rewards"] = rewards
+        # Log the data to wandb
+        wandb.log(data)
+        
         
     def render(self, mode="dict"):
         """

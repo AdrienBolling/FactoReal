@@ -132,8 +132,8 @@ def make_config(which: str = "default") -> ARGS:
     :return: The configuration for the environment.
     """
     if which == "default":
-        return DEFAULT_ARGS
+        return DEFAULT_ARGS, DEFAULT_DICT
     if which == "simple":
-        return ARGS(**SIMPLE_DICT)
+        return ARGS(**SIMPLE_DICT), SIMPLE_DICT
     else:
         raise ValueError(f"Unknown configuration: {which}")
