@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument(
         "--config_type",
         type=str,
-        default="default",
+        default="simple",
         help="Type of configuration to use. Options: default, simple.",
     )
     parser.add_argument(
@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument(
         "--entity_name",
         type=str,
-        default="bolling.adrien",
+        default="bolling-adrien",
         help="Name of the wandb entity.",
     )
     
@@ -46,13 +46,13 @@ def parse_args():
     parser.add_argument(
         "--num_runs_eval",
         type=int,
-        default=1,
+        default=100,
         help="Number of runs to perform.",
     )
     parser.add_argument(
         "--num_episodes_train",
         type=int,
-        default=100,
+        default=10000,
         help="Number of episodes to run.",
     )
     
@@ -70,8 +70,8 @@ def main():
     # Update the configuration with the parsed arguments
     config_dict.update({
         "baseline": args.baseline,
-        "num_runs_eval": args.num_runs,
-        "num_episodes_train": args.num_episodes,
+        "num_runs_eval": args.num_runs_eval,
+        "num_episodes_train": args.num_episodes_train,
     })
     
     #### Train the agent and test it consecutively
@@ -87,9 +87,9 @@ def main():
     init_wandb(config_dict, args.project_name, args.entity_name, job_type="train")
     # Train the agent here
     if args.baseline == "A2C":
-        model = A2C("MlpPolicy", env, verbose=0, policy_kwargs=policy_kwargs)
+        model = A2C("MlpPolicy", env, verbose=0, policy_kwargs=policy_kwargs, device='cpu')
     elif args.baseline == "PPO":
-        model = PPO("MlpPolicy", env, verbose=0, policy_kwargs=policy_kwargs)
+        model = PPO("MlpPolicy", env, verbose=0, policy_kwargs=policy_kwargs, device='cpu')
     elif args.baseline == "DQN":
         model = DQN("MlpPolicy", env, verbose=0, policy_kwargs=policy_kwargs)
     else:
@@ -100,6 +100,9 @@ def main():
     # Finish wandb training run
     wandb.finish()
     # Save the model
+    # Check if the models directory exists, if not create it
+    if not os.path.exists("models"):
+        os.makedirs("models")
     model.save(os.path.join("models", f"{args.baseline}_{args.config_type}"))
     
     
@@ -107,7 +110,7 @@ def main():
     # Init wandb with testing job_type
     init_wandb(config_dict, args.project_name, args.entity_name, job_type="test")
     # Test the agent here
-    obs = env.reset()
+    obs, info = env.reset()
     done = False
     truncated = False
     for i in range(args.num_runs_eval):
@@ -117,3 +120,10 @@ def main():
             obs, reward, done, truncated, info = env.step(action)
             if done:
                 break
+            
+            
+    # Finish wandb testing run
+    wandb.finish()
+    
+if __name__ == "__main__":
+    main()

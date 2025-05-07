@@ -118,7 +118,7 @@ SIMPLE_DICT = {
     "technician_ai_trusts": 1.0,
     "technician_knowledges": 0.8,
     "fatigue_recovery_profile": "fast",
-    "episode_length": 1000,
+    "episode_length": 10000,
     "seed":
         42,
 }

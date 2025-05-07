@@ -285,7 +285,7 @@ class Machine:
             },
             "current_maintenance": {
                 "step_cost": self.current_maintenance_step,
-                "component": self.current_maintenance.component if self.current_maintenance else None,
+                "component": (self.current_maintenance.component.name if hasattr(self.current_maintenance.component, "name") else [c.name for c in self.current_maintenance.component]) if self.current_maintenance else None,
             },
             "components": {
                 component.name: {

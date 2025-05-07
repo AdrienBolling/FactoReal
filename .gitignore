@@ -165,3 +165,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# VS Code settings
+.vscode/
+
+# Wandb files
+wandb/
+
+# Saved models
+models/
